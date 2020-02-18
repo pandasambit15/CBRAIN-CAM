@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH -J RHJob
+#SBATCH -n 8
+#SBATCH -N 8
+#SBATCH -t 07:00:00
+#SBATCH -o output_rh.txt
+#SBATCH -p normal
+
+conda activate CbrainCustomLayer
+
+python RH.py
+

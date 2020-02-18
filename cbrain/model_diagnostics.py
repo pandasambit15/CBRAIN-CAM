@@ -15,7 +15,7 @@ import yaml
 
 # tgb - 4/10/2019 - Adding a model_path input to load a custom model
 class ModelDiagnostics():
-    def __init__(self, model, config_fn, data_fn, nlat=64, nlon=128, nlev=30, ntime=48):
+    def __init__(self, model, config_fn, data_fn, normalize_flag=True,nlat=64, nlon=128, nlev=30, ntime=48):
 
         self.nlat, self.nlon = nlat, nlon
         self.ngeo = nlat * nlon
@@ -45,10 +45,13 @@ class ModelDiagnostics():
             batch_size=self.ngeo,
             shuffle=False,
             xarray=True,
+            normalize_flag=normalize_flag,
             var_cut_off=config['var_cut_off'] if 'var_cut_off' in config.keys() else None
         )
 
     def reshape_ngeo(self, x):
+#         print(x)
+#         return tf.reshape(x,[self.nlat, self.nlon, -1])
         return x.reshape(self.nlat, self.nlon, -1)
     
     def get_input_var_idx(self, var):
@@ -86,7 +89,8 @@ class ModelDiagnostics():
     def get_inp_pred_truth(self,itime):
         """ Gets input and prediction in normalized form """
         X, truth = self.valid_gen[itime]
-        pred = self.model.predict_on_batch(X)
+#         print(X.values)
+        pred = self.model.predict_on_batch(X.values)
         return X.values, pred, truth.values
     
     # tgb - 5/20/2019 - Get normalized/full pressure coordinate

@@ -1,0 +1,52 @@
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+Traceback (most recent call last):
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/file_manager.py", line 198, in _acquire_with_cache_info
+    file = self._cache[self._key]
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/lru_cache.py", line 53, in __getitem__
+    value = self._cache[key]
+KeyError: [<class 'netCDF4._netCDF4.Dataset'>, ('/oasis/scratch/comet/ankitesh/temp_project/PrepData/CI_SP_M4K_train_shuffle.nc',), 'r', (('clobber', True), ('diskless', False), ('format', 'NETCDF4'), ('persist', False))]
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ankitesh/CBrain_project/CBRAIN-CAM/notebooks/ankitesh_devlog/scripts/brute_force_BN.py", line 46, in <module>
+    normalize_flag=False
+  File "/home/ankitesh/CBrain_project/CBRAIN-CAM/notebooks/ankitesh_devlog/scripts/cbrain/data_generator.py", line 29, in __init__
+    self.data_ds = xr.open_dataset(data_fn)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/api.py", line 499, in open_dataset
+    filename_or_obj, group=group, lock=lock, **backend_kwargs
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/netCDF4_.py", line 357, in open
+    return cls(manager, group=group, mode=mode, lock=lock, autoclose=autoclose)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/netCDF4_.py", line 313, in __init__
+    self.format = self.ds.data_model
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/netCDF4_.py", line 366, in ds
+    return self._acquire()
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/netCDF4_.py", line 360, in _acquire
+    with self._manager.acquire_context(needs_lock) as root:
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/contextlib.py", line 81, in __enter__
+    return next(self.gen)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/file_manager.py", line 186, in acquire_context
+    file, cached = self._acquire_with_cache_info(needs_lock)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/xarray/backends/file_manager.py", line 204, in _acquire_with_cache_info
+    file = self._opener(*self._args, **kwargs)
+  File "netCDF4/_netCDF4.pyx", line 2321, in netCDF4._netCDF4.Dataset.__init__
+  File "netCDF4/_netCDF4.pyx", line 1885, in netCDF4._netCDF4._ensure_nc_success
+OSError: [Errno -101] NetCDF: HDF error: b'/oasis/scratch/comet/ankitesh/temp_project/PrepData/CI_SP_M4K_train_shuffle.nc'

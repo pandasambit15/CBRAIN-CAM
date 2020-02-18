@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH -J TNS_RHJob
+#SBATCH -n 16
+#SBATCH -N 16
+#SBATCH -t 04:00:00
+#SBATCH -o output_tns_rh_v2.txt
+#SBATCH -p normal
+
+conda activate CbrainCustomLayer
+
+python TNS_RH.py
+

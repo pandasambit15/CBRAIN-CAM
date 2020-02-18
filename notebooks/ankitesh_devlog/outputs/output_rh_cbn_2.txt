@@ -1,0 +1,103 @@
+2020-02-17 10:09:26.359037: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2020-02-17 10:09:26.404580: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1618] Found device 0 with properties: 
+name: Tesla P100-PCIE-16GB major: 6 minor: 0 memoryClockRate(GHz): 1.3285
+pciBusID: 0000:86:00.0
+2020-02-17 10:09:26.408402: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2020-02-17 10:09:26.444469: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2020-02-17 10:09:26.465960: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10.0
+2020-02-17 10:09:26.475178: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10.0
+2020-02-17 10:09:26.514020: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10.0
+2020-02-17 10:09:26.539094: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10.0
+2020-02-17 10:09:26.628614: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-02-17 10:09:26.632087: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1746] Adding visible gpu devices: 0
+2020-02-17 10:09:26.632370: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2020-02-17 10:09:26.648138: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2400055000 Hz
+2020-02-17 10:09:26.648232: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x5615e5d2afb0 executing computations on platform Host. Devices:
+2020-02-17 10:09:26.648246: I tensorflow/compiler/xla/service/service.cc:175]   StreamExecutor device (0): Host, Default Version
+2020-02-17 10:09:26.650406: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1618] Found device 0 with properties: 
+name: Tesla P100-PCIE-16GB major: 6 minor: 0 memoryClockRate(GHz): 1.3285
+pciBusID: 0000:86:00.0
+2020-02-17 10:09:26.650443: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2020-02-17 10:09:26.650463: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2020-02-17 10:09:26.650480: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10.0
+2020-02-17 10:09:26.650496: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10.0
+2020-02-17 10:09:26.650512: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10.0
+2020-02-17 10:09:26.650529: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10.0
+2020-02-17 10:09:26.650545: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-02-17 10:09:26.653833: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1746] Adding visible gpu devices: 0
+2020-02-17 10:09:26.655284: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2020-02-17 10:09:26.763513: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1159] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-02-17 10:09:26.763557: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1165]      0 
+2020-02-17 10:09:26.763567: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1178] 0:   N 
+2020-02-17 10:09:26.769315: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1304] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 15216 MB memory) -> physical GPU (device: 0, name: Tesla P100-PCIE-16GB, pci bus id: 0000:86:00.0, compute capability: 6.0)
+2020-02-17 10:09:26.771300: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x5615e645c900 executing computations on platform CUDA. Devices:
+2020-02-17 10:09:26.771318: I tensorflow/compiler/xla/service/service.cc:175]   StreamExecutor device (0): Tesla P100-PCIE-16GB, Compute Capability 6.0
+WARNING:tensorflow:Entity <bound method QV2RH.call of <climate_invariant.QV2RH object at 0x2acff24304e0>> could not be transformed and will be executed as-is. Please report this to the AutoGraph team. When filing the bug, set the verbosity to 10 (on Linux, `export AUTOGRAPH_VERBOSITY=10`) and attach the full output. Cause: module 'gast' has no attribute 'Num'
+Model: "model"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_1 (InputLayer)         [(None, 64)]              0         
+_________________________________________________________________
+custom_batch_normalization ( (None, 64)                256       
+_________________________________________________________________
+q_v2rh (QV2RH)               (None, 64)                0         
+_________________________________________________________________
+dense (Dense)                (None, 128)               8320      
+_________________________________________________________________
+leaky_re_lu (LeakyReLU)      (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_2 (None, 128)               512       
+_________________________________________________________________
+dense_1 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_1 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_3 (None, 128)               512       
+_________________________________________________________________
+dense_2 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_2 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_4 (None, 128)               512       
+_________________________________________________________________
+dense_3 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_3 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_5 (None, 128)               512       
+_________________________________________________________________
+dense_4 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_4 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_6 (None, 128)               512       
+_________________________________________________________________
+dense_5 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_5 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_7 (None, 128)               512       
+_________________________________________________________________
+dense_6 (Dense)              (None, 128)               16512     
+_________________________________________________________________
+leaky_re_lu_6 (LeakyReLU)    (None, 128)               0         
+_________________________________________________________________
+custom_batch_normalization_8 (None, 128)               512       
+_________________________________________________________________
+dense_7 (Dense)              (None, 64)                8256      
+=================================================================
+Total params: 119,488
+Trainable params: 117,568
+Non-trainable params: 1,920
+_________________________________________________________________
+Traceback (most recent call last):
+  File "/home/ankitesh/CBrain_project/CBRAIN-CAM/notebooks/ankitesh_devlog/scripts/RH_CBN.py", line 217, in <module>
+    Inp_RH_CBN.load_weights(path_HDF5+'CI01_RH_CBN.hdf5')
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/tensorflow_core/python/keras/engine/training.py", line 181, in load_weights
+    return super(Model, self).load_weights(filepath, by_name)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/tensorflow_core/python/keras/engine/network.py", line 1177, in load_weights
+    saving.load_weights_from_hdf5_group(f, self.layers)
+  File "/home/ankitesh/miniconda3/envs/CbrainCustomLayer/lib/python3.6/site-packages/tensorflow_core/python/keras/saving/hdf5_format.py", line 697, in load_weights_from_hdf5_group
+    str(len(weight_values)) + ' elements.')
+ValueError: Layer #0 (named "custom_batch_normalization_9" in the current model) was found to correspond to layer custom_batch_normalization_9 in the save file. However the new layer custom_batch_normalization_9 expects 4 weights, but the saved weights have 2 elements.

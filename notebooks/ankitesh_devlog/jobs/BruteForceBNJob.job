@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -J BruteForceBNJob
+#SBATCH -n 32
+#SBATCH -N 16
+#SBATCH -t 10:00:00
+#SBATCH -o outputs/output_bf_bn.txt
+#SBATCH -p normal
+
+conda activate CbrainCustomLayer
+
+python scripts/brute_force_BN.py

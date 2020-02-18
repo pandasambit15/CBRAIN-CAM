@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -J RHCBNJob
+#SBATCH -n 1
+#SBATCH -N 1
+#SBATCH --export=ALL
+#SBATCH -t 12:00:00
+#SBATCH -o /home/ankitesh/CBrain_project/CBRAIN-CAM/notebooks/ankitesh_devlog/outputs/output_rh_cbn_3.txt
+#SBATCH -p gpu-shared
+#SBATCH --gres=gpu:p100:1
+module purge
+python /home/ankitesh/CBrain_project/CBRAIN-CAM/notebooks/ankitesh_devlog/scripts/RH_CBN.py
