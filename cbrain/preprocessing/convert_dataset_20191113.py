@@ -37,6 +37,9 @@ def compute_bp(ds, var):
     base_var = var[:-2] + 'AP'
     return (ds[base_var] - ds[phy_dict[base_var]] * DT)[1:]  # Not the first time step
 
+def compute_TfromNS(ds):
+    return compute_bp(ds,'TBP')-compute_bp(ds,'TBP')[:,-1,:,:]
+
 def compute_RH(ds):
     # tgb - 11/13/2019 - Calculates Relative humidity following notebook 027
     def RH(T,qv,P0,PS,hyam,hybm):
@@ -314,6 +317,8 @@ def create_stacked_da(ds, vars):
             da = compute_CarnotS(ds)
         elif var == 'TfromTS':
             da = compute_TfromTS(ds)
+        elif var == 'TfromNS':
+            da = compute_TfromNS(ds)
         elif 'dt_adiabatic' in var:
             base_var = var[:-12] + 'AP'
             da = compute_adiabatic(ds, base_var)
