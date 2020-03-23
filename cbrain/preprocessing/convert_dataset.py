@@ -33,8 +33,19 @@ def compute_bp(ds, var):
     Returns:
         bp: xarray dataarray containing just BP variable, with the first time step cut.
     """
+    
     base_var = var[:-2] + 'AP'
-    return (ds[base_var] - ds[phy_dict[base_var]] * DT)[1:]  # Not the first time step
+    #print("--------------------------------------------------")
+    #print(var)
+    #print(ds)
+    #print(base_var)
+    #print(ds[base_var].shape)
+    #print(phy_dict[base_var])
+    #print((ds[phy_dict[base_var]]*DT).shape)	
+    #print((ds[base_var] - ds[phy_dict[base_var]]*DT))	    
+    #print((ds[base_var] - ds[phy_dict[base_var]]*DT)[1:].shape)	
+    #print("--------------------------------------------------")
+    return (ds[base_var] - ds[phy_dict[base_var]] * DT)  # Not the first time step
 
 
 def compute_c(ds, base_var):
@@ -49,11 +60,11 @@ def compute_c(ds, base_var):
     Returns:
         c: xarray dataarray
     """
-    c = ds[base_var].isel(time=slice(0, -1, 1))   # Not the last time step
+    c = ds[base_var].isel(time=slice(0,-1,1))   # Not the last time step
     if base_var in diff_dict.keys():
-        c -= ds[diff_dict[base_var]].isel(time=slice(0, -1, 1)) * DT
+        c -= (ds[diff_dict[base_var]].isel(time=slice(0,-1,1)) * DT)
     # Change time coordinate. Necessary for later computation of adiabatic
-    c['time'] = ds.isel(time=slice(1, None, 1))['time']
+    c['time'] = ds['time'][1:]
     return c
 
 
@@ -88,9 +99,9 @@ def create_stacked_da(ds, vars):
         elif var in ['LHFLX', 'SHFLX']:
             da = ds[var][:-1]
         elif var == 'PRECST':
-            da = (ds['PRECSC'] + ds['PRECSL'])[1:]
+            da = (ds['PRECSC'] + ds['PRECSL'])
         elif var == 'PRECT':
-            da = (ds['PRECC'] + ds['PRECL'])[1:]
+            da = (ds['PRECC'] + ds['PRECL'])
 #         elif var == 'PRECTEND':
 #             da = (ds['QCTEND'])[1:]
 #         elif var == 'PRECSTEN':
@@ -99,7 +110,7 @@ def create_stacked_da(ds, vars):
             base_var = var[:-12] + 'AP'
             da = compute_adiabatic(ds, base_var)
         else:
-            da = ds[var][1:]
+            da = ds[var]
         var_list.append(da)
         nlev = da.lev.size if 'lev' in da.coords else 1
         names_list.extend([var] * nlev)
@@ -185,13 +196,13 @@ def preprocess(in_dir, in_fns, out_dir, out_fn, vars, lev_range=(0, 30)):
 
     logging.info('Crop levels')
     ds = ds.isel(lev=slice(*lev_range, 1))
-
+   
     logging.info('Create stacked dataarray')
     da = create_stacked_da(ds, vars)
 
     logging.info('Stack and reshape dataarray')
     da = reshape_da(da).reset_index('sample')
-
+    print(da)
     logging.info(f'Save dataarray as {out_fn}')
     da.to_netcdf(out_fn)
 

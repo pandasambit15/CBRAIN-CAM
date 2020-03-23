@@ -14,6 +14,11 @@ import pickle
 import yaml
 
 # tgb - 4/10/2019 - Adding a model_path input to load a custom model
+
+def bflx_split_model_predict(Inp,pos_model,neg_model):
+    ## get the positve input and the negative input
+    pass
+
 class ModelDiagnostics():
     def __init__(self, model, config_fn, data_fn, normalize_flag=True,nlat=64, nlon=128, nlev=30, ntime=48):
 
@@ -29,6 +34,7 @@ class ModelDiagnostics():
 #             custom_objects={**layer_dict, **loss_dict})
 #         self.model = tf.keras.models.load_model(model_path,
 #             custom_objects={**layer_dict, **loss_dict})
+ 
         self.model = model
 
         out_scale_dict = load_pickle(config['output_dict'])
@@ -89,7 +95,10 @@ class ModelDiagnostics():
     def get_inp_pred_truth(self,itime):
         """ Gets input and prediction in normalized form """
         X, truth = self.valid_gen[itime]
-#         print(X.values)
+#         print("ankitesh")
+#         print(X.values.shape)
+#         print("ankitesh")
+        
         pred = self.model.predict_on_batch(X.values)
         return X.values, pred, truth.values
     

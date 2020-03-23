@@ -14,9 +14,10 @@ from collections import OrderedDict
 import pandas as pd
 import pickle
 import pdb
-import netCDF4 as nc
 import xarray as xr
-import h5py
+import netCDF4 as nc
+
+#import h5py
 from glob import glob
 import sys, os
 import seaborn as sns
