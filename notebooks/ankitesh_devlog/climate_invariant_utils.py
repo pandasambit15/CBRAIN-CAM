@@ -506,9 +506,12 @@ class LhflxTransNumpy:
         Tprior = X[:,self.TBP_idx]*self.inp_div[self.TBP_idx]+self.inp_sub[self.TBP_idx]
         qvprior = X[:,self.QBP_idx]*self.inp_div[self.QBP_idx]+self.inp_sub[self.QBP_idx]
         PSprior = X[:,self.PS_idx]*self.inp_div[self.PS_idx]+self.inp_sub[self.PS_idx]
-        TSprior = X[:,self.TS_idx]*self.inp_div[self.TS_idx]+self.inp_sub[self.TS_idx]
-        qsatsurf = ThermLibNumpy.qsatsurfNumpy(TSprior,1e5,PSprior)
-        X[:,self.LHFLX_idx] = X[:,self.LHFLX_idx]/(L_V*qsatsurf)
+#         TSprior = X[:,self.TS_idx]*self.inp_div[self.TS_idx]+self.inp_sub[self.TS_idx]
+        qsat = ThermLibNumpy.qsatNumpy(Tprior,1e5,PSprior,self.hyam,self.hybm)
+#         qsatsurf = ThermLibNumpy.qsatsurfNumpy(TSprior,1e5,PSprior)
+#         X[:,self.LHFLX_idx] = X[:,self.LHFLX_idx]/(L_V*qsatsurf)
+        X[:,self.LHFLX_idx] = X[:,self.LHFLX_idx]/(L_V*qsat[:,-1])
+        
         return X
     
     
