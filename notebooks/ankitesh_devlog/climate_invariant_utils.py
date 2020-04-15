@@ -1,9 +1,17 @@
 
 from cbrain.imports import *
+from cbrain.utils import *
+from cbrain.layers import *
+from cbrain.data_generator import DataGenerator
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import *
+from cbrain.cam_constants import *
 from tensorflow.keras.layers import *
 from tensorflow.keras import layers
 import enum
 import tensorflow_probability as tfp
+import yaml
+import pickle
 
 ################################### Tensorflow Versions ##############################################
 
@@ -241,8 +249,8 @@ class ScaleOp(layers.Layer):
        
         elif self.scaling_index==OpType.PWA_PARTIAL.value:
             scaling_factor = inp[:,64]
-            con_moi = op[:,:30] * tf.expand_dims(scaling_factor,1) * 0.5
-            con_heat = op[:,30:60] * tf.expand_dims(scaling_factor,1) * 0.5
+            con_moi = op[:,:30] * tf.expand_dims(scaling_factor**0.5,1)
+            con_heat = op[:,30:60] / tf.expand_dims(scaling_factor**0.5,1)
             op_updated = tf.concat((con_moi,con_heat),axis=1)
         
         elif self.scaling_index==OpType.PWA_PARTIAL_2.value:
@@ -698,5 +706,279 @@ class InterpolationNumpy:
         return X_processed
 
 #################################################################################################################
+
+class DataGeneratorClimInv(DataGenerator):
+    
+    def __init__(self, data_fn, input_vars, output_vars,
+             norm_fn=None, input_transform=None, output_transform=None,
+             batch_size=1024, shuffle=True, xarray=False, var_cut_off=None, normalize_flag=True,
+             rh_trans=True,t2tns_trans=True,
+             lhflx_trans=True,
+             scaling=True,interpolate=True,
+             hyam=None,hybm=None,                 
+             inp_subRH=None,inp_divRH=None,
+             inp_subTNS=None,inp_divTNS=None,
+             lev=None, interm_size=40,
+             lower_lim=6,
+             is_continous=True,Tnot=5,
+                mode='train'):
+        
+        self.scaling = scaling
+        self.interpolate = interpolate
+        self.rh_trans = rh_trans
+        self.t2tns_trans = t2tns_trans
+        self.lhflx_trans = lhflx_trans
+        self.inp_shape = 64
+        self.mode=mode
+        super().__init__(data_fn, input_vars,output_vars,norm_fn,input_transform,output_transform,
+                        batch_size,shuffle,xarray,var_cut_off,normalize_flag) ## call the base data generator
+        self.inp_sub = self.input_transform.sub
+        self.inp_div = self.input_transform.div
+        if rh_trans:
+            self.qv2rhLayer = QV2RHNumpy(self.inp_sub,self.inp_div,inp_subRH,inp_divRH,hyam,hybm)
+        
+        if lhflx_trans:
+            self.lhflxLayer = LhflxTransNumpy(self.inp_sub,self.inp_div,hyam,hybm)
+            
+        if t2tns_trans:
+            self.t2tnsLayer = T2TmTNSNumpy(self.inp_sub,self.inp_div,inp_subTNS,inp_divTNS,hyam,hybm)
+            
+        if scaling:
+            self.scalingLayer = ScalingNumpy(hyam,hybm)
+            self.inp_shape += 1
+                    
+        if interpolate:
+            self.interpLayer = InterpolationNumpy(lev,is_continous,Tnot,lower_lim,interm_size)
+            self.inp_shape += interm_size*2 + 4 + 30 ## 4 same as 60-64 and 30 for lev_tilde.size
+        
+            
+        
+    def __getitem__(self, index):
+        # Compute start and end indices for batch
+        start_idx = index * self.batch_size
+        end_idx = start_idx + self.batch_size
+
+        # Grab batch from data
+        batch = self.data_ds['vars'][start_idx:end_idx]
+
+        # Split into inputs and outputs
+        X = batch[:, self.input_idxs]
+        Y = batch[:, self.output_idxs]
+        # Normalize
+        X_norm = self.input_transform.transform(X)
+        Y = self.output_transform.transform(Y)
+        X_result = X_norm
+        
+        if self.rh_trans:
+            X_result = self.qv2rhLayer.process(X_result) 
+            
+        if self.lhflx_trans:
+            X_result = self.lhflxLayer.process(X_result)
+            X_result = X_result[:,:64]
+            X = X[:,:64]
+            
+        if self.t2tns_trans:
+            X_result = self.t2tnsLayer.process(X_result)
+        
+        if self.scaling:
+            scalings = self.scalingLayer.process(X) 
+            X_result = np.hstack((X_result,scalings))
+        
+        if self.interpolate:
+            interpolated = self.interpLayer.process(X,X_result)
+            X_result = np.hstack((X_result,interpolated))
+            
+
+        if self.mode=='val':
+            return xr.DataArray(X_result), xr.DataArray(Y)
+        return X_result,Y
+    
+    ##transforms the input data into the required format, take the unnormalized dataset
+    def transform(self,X):
+        X_norm = self.input_transform.transform(X)
+        X_result = X_norm
+        
+        if self.rh_trans:
+            X_result = self.qv2rhLayer.process(X_result)  
+        
+        if self.lhflx_trans:
+            X_result = self.lhflxLayer.process(X_result)
+
+        if self.t2tns_trans:
+            X_result = self.t2tnsLayer.process(X_result)
+        
+        if self.scaling:
+            scalings = self.scalingLayer.process(X) 
+            X_result = np.hstack((X_result,scalings))
+        
+        if self.interpolate:
+            interpolated = self.interpLayer.process(X,X_result)
+            X_result = np.hstack((X_result,interpolated))
+            
+
+        return X_result
+    
+######################            Class for model diagnostics      #################
+class ClimateNet:
+    def __init__(self,dict_lay,data_fn,config_fn,
+             lev,hyam,hybm,TRAINDIR,
+             nlat, nlon, nlev, ntime,
+             inp_subRH,inp_divRH,
+             inp_subTNS,inp_divTNS,
+             rh_trans=False,t2tns_trans=False,
+             lhflx_trans=False,
+             scaling=False,interpolate=False,
+             model=None,
+             pos_model=None,neg_model=None,
+                ):
+        
+        
+        with open(config_fn, 'r') as f:
+            config = yaml.load(f)
+        out_scale_dict = load_pickle(config['output_dict'])
+        ngeo = nlat * nlon
+        in_vars = config['inputs']
+        out_vars = config['outputs']
+
+        self.valid_gen = DataGeneratorClimInv(
+                data_fn = data_fn,
+                input_vars=in_vars,
+                output_vars=out_vars,
+                norm_fn=config['data_dir'] + config['norm_fn'],
+                input_transform=(config['input_sub'], config['input_div']),
+                output_transform=out_scale_dict,
+                batch_size=ngeo,
+                shuffle=False,
+                xarray=True,
+                normalize_flag=True,
+                var_cut_off=config['var_cut_off'] if 'var_cut_off' in config.keys() else None,
+                rh_trans = rh_trans,t2tns_trans = t2tns_trans,
+                lhflx_trans = lhflx_trans,
+                scaling = scaling,
+                lev=lev,interpolate = interpolate,
+                hyam=hyam,hybm=hybm,
+                inp_subRH=inp_subRH, inp_divRH=inp_divRH,
+                inp_subTNS=inp_subTNS,inp_divTNS=inp_divTNS,
+                mode='val'                
+                
+        )
+
+        self.rh_trans = rh_trans
+        self.t2tns_trans = t2tns_trans
+        self.lhflx_trans = lhflx_trans
+        self.scaling = scaling
+        self.interpolate = interpolate
+        self.subQ,self.divQ = np.array(self.valid_gen.input_transform.sub),np.array(self.valid_gen.input_transform.div)
+
+        if model != None:
+            self.model = load_model(model,custom_objects=dict_lay)
+            
+        if scaling:
+            self.pos_model = load_model(pos_model,custom_objects=dict_lay)
+            self.neg_model = load_model(neg_model,custom_objects=dict_lay)
+         
+            #just for the norm values
+            self.pos_data_gen = DataGeneratorClimInv(
+                                data_fn = TRAINDIR+'PosCRH_CI_SP_M4K_train_shuffle.nc',
+                                input_vars = in_vars,
+                                output_vars = out_vars,
+                                norm_fn = TRAINDIR+'PosCRH_CI_SP_M4K_NORM_norm.nc',
+                                input_transform = ('mean', 'maxrs'),
+                                output_transform = out_scale_dict,
+                                batch_size=1024,
+                                shuffle=True,
+                                normalize_flag=True,
+                                lev=lev,
+                                hyam=hyam,hybm=hybm,
+                                inp_subRH=train_gen_RH_pos.input_transform.sub, inp_divRH=train_gen_RH_pos.input_transform.div,
+                                inp_subTNS=train_gen_TNS_pos.input_transform.sub,inp_divTNS=train_gen_TNS_pos.input_transform.div,
+                                is_continous=True,
+                                scaling=True,
+                                interpolate=interpolate,
+                                rh_trans=rh_trans,
+                                t2tns_trans=t2tns_trans,
+                                lhflx_trans=lhflx_trans
+                            )
+        
+            self.neg_data_gen = DataGeneratorClimInv(
+                                data_fn = TRAINDIR+'NegCRH_CI_SP_M4K_train_shuffle.nc',
+                                input_vars = in_vars,
+                                output_vars = out_vars,
+                                norm_fn = TRAINDIR+'NegCRH_CI_SP_M4K_NORM_norm.nc',
+                                input_transform = ('mean', 'maxrs'),
+                                output_transform = out_scale_dict,
+                                batch_size=1024,
+                                shuffle=True,
+                                normalize_flag=True,
+                                lev=lev,
+                                hyam=hyam,hybm=hybm,
+                                inp_subRH=train_gen_RH_neg.input_transform.sub, inp_divRH=train_gen_RH_neg.input_transform.div,
+                                inp_subTNS=train_gen_TNS_neg.input_transform.sub,inp_divTNS=train_gen_TNS_neg.input_transform.div,
+                                is_continous=True,
+                                interpolate=interpolate,
+                                scaling=False,
+                                rh_trans=rh_trans,
+                                t2tns_trans=t2tns_trans,
+                                lhflx_trans=lhflx_trans
+                            )
+    
+    
+    def reorder(self,op_pos,op_neg,mask):
+        op = []
+        pos_i=0
+        neg_i = 0
+        for m in mask:
+            if m:
+                op.append(op_pos[pos_i])
+                pos_i += 1
+            else:
+                op.append(op_neg[neg_i])
+                neg_i += 1
+        return np.array(op)
+                
+                
+    def predict_on_batch(self,inp):
+        #inp = batch x 179
+        inp_de = inp*self.divQ+self.subQ
+        if not self.scaling:
+            inp_pred = self.valid_gen.transform(inp_de)           
+            return self.model.predict_on_batch(inp_pred)
+
+        mask = ScalingNumpy(hyam,hybm).crh(inp_de)> 0.8
+        pos_inp = inp[mask]
+        neg_inp = inp[np.logical_not(mask)]
+        ### for positive
+        pos_inp = pos_inp*self.divQ + self.subQ
+        pos_inp = self.pos_data_gen.transform(pos_inp)
+        op_pos = self.pos_model.predict_on_batch(pos_inp)
+        neg_inp = neg_inp*self.divQ + self.subQ
+        neg_inp = self.neg_data_gen.transform(neg_inp)
+        op_neg = self.neg_model.predict_on_batch(neg_inp)
+        op = self.reorder(np.array(op_pos),np.array(op_neg),mask)
+        return op
+        
+
+
+def load_climate_model(dict_lay,config_fn,data_fn,lev,hyam,hybm,TRAINDIR,
+                       inp_subRH,inp_divRH,
+                       inp_subTNS,inp_divTNS,
+                       nlat=64, nlon=128, nlev=30, ntime=48,
+                        rh_trans=False,t2tns_trans=False,
+                        lhflx_trans=False,
+                        scaling=False,interpolate=False,
+                        model=None,
+                        pos_model=None,neg_model=None):
+    
+    obj = ClimateNet(dict_lay,data_fn,config_fn,
+                     lev,hyam,hybm,TRAINDIR,
+                     nlat, nlon, nlev, ntime,
+                     inp_subRH,inp_divRH,
+                     inp_subTNS,inp_divTNS,
+                    rh_trans=rh_trans,t2tns_trans=t2tns_trans,
+                    lhflx_trans=lhflx_trans, scaling=scaling,
+                    interpolate=interpolate,
+                    model = model,
+                    pos_model=pos_model,neg_model=neg_model)
+    return obj
 
  
